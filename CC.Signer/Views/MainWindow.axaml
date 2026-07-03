@@ -1,0 +1,187 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:CC.Signer.ViewModels"
+        mc:Ignorable="d" d:DesignWidth="700" d:DesignHeight="600"
+        x:Class="CC.Signer.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="CC Signer — Cartão de Cidadão"
+        Width="700" Height="600"
+        MinWidth="600" MinHeight="500"
+        Background="#1a1a2e"
+        FontFamily="Inter">
+
+    <Window.Styles>
+        <Style Selector="TextBlock">
+            <Setter Property="Foreground" Value="#e0e0e0"/>
+        </Style>
+        <Style Selector="TextBox">
+            <Setter Property="Background" Value="#16213e"/>
+            <Setter Property="Foreground" Value="#e0e0e0"/>
+            <Setter Property="BorderBrush" Value="#0f3460"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+        <Style Selector="Button">
+            <Setter Property="Background" Value="#0f3460"/>
+            <Setter Property="Foreground" Value="#e0e0e0"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="CornerRadius" Value="4"/>
+        </Style>
+        <Style Selector="Button:pointerover">
+            <Setter Property="Background" Value="#165083"/>
+        </Style>
+        <Style Selector="Button.primary">
+            <Setter Property="Background" Value="#2ECC71"/>
+            <Setter Property="Foreground" Value="#1a1a2e"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+        </Style>
+        <Style Selector="Button.primary:pointerover">
+            <Setter Property="Background" Value="#27ae60"/>
+        </Style>
+        <Style Selector="Button.danger">
+            <Setter Property="Background" Value="#E74C3C"/>
+        </Style>
+        <Style Selector="ListBox">
+            <Setter Property="Background" Value="#16213e"/>
+            <Setter Property="Foreground" Value="#e0e0e0"/>
+            <Setter Property="BorderBrush" Value="#0f3460"/>
+        </Style>
+    </Window.Styles>
+
+    <Grid RowDefinitions="Auto,*,Auto" Margin="16">
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Spacing="8" Margin="0,0,0,12">
+            <StackPanel Orientation="Horizontal" Spacing="12">
+                <TextBlock Text="CC Signer" FontSize="22" FontWeight="Bold" Foreground="#2ECC71"/>
+                <Border Background="{Binding StatusColor}" CornerRadius="3" Padding="8,2" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding StatusText}" FontSize="12" Foreground="#1a1a2e"/>
+                </Border>
+            </StackPanel>
+            <TextBlock Text="Assinatura digital com Cartão de Cidadão + Encriptação AES-256-GCM"
+                       FontSize="12" Foreground="#888"/>
+        </StackPanel>
+
+        <!-- Main content -->
+        <ScrollViewer Grid.Row="1">
+            <StackPanel Spacing="12">
+                <!-- CC Status -->
+                <Border Background="#16213e" CornerRadius="6" Padding="12">
+                    <StackPanel Spacing="8">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="Estado do Cartão" FontSize="14" FontWeight="Bold"/>
+                            <Button Content="🔄" Width="32" Height="32" Padding="0"
+                                    Command="{Binding RefreshStatusCommand}"
+                                    ToolTip.Tip="Atualizar estado"/>
+                        </StackPanel>
+
+                        <ListBox ItemsSource="{Binding Certificates}"
+                                 MaxHeight="100"
+                                 IsVisible="{Binding IsCCAvailable}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" Spacing="8" Margin="4">
+                                        <TextBlock Text="🔑" FontSize="14"/>
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Label}" FontSize="12"/>
+                                            <TextBlock Text="{Binding Id}" FontSize="10" Foreground="#888"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+
+                        <Button Content="Extrair Certificado PEM" 
+                                Command="{Binding ExtractCertificateCommand}"
+                                IsEnabled="{Binding IsCCAvailable}"
+                                IsVisible="{Binding IsCCAvailable}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Data to sign -->
+                <Border Background="#16213e" CornerRadius="6" Padding="12">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Dados para Assinar" FontSize="14" FontWeight="Bold"/>
+                        <TextBlock Text="Insira o hash/documento a assinar (ex: hash SHA-256 do documento)"
+                                   FontSize="11" Foreground="#888"/>
+                        <TextBox Text="{Binding DataToSign}" 
+                                 Height="80" 
+                                 AcceptsReturn="True"
+                                 PlaceholderText="Hash ou dados a assinar com o CC..."/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Output directory -->
+                <Border Background="#16213e" CornerRadius="6" Padding="12">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Diretório de Saída" FontSize="14" FontWeight="Bold"/>
+                        <TextBox Text="{Binding OutputDirectory}"
+                                 PlaceholderText="~/.ilayercert/signatures/"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Sign button -->
+                <Button Classes="primary" 
+                        Content="🔏 Assinar com Cartão de Cidadão e Gravar"
+                        Command="{Binding SignAndSaveCommand}"
+                        IsEnabled="{Binding IsBusy, Converter={x:Static BoolConverters.Not}}"
+                        Height="44" FontSize="14"/>
+
+                <!-- Busy indicator -->
+                <Border Background="#2c3e50" CornerRadius="4" Padding="10"
+                        IsVisible="{Binding IsBusy}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="⏳" FontSize="16"/>
+                        <TextBlock Text="{Binding BusyText}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Results -->
+                <Border Background="#16213e" CornerRadius="6" Padding="12"
+                        IsVisible="{Binding SignedFileName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Resultado" FontSize="14" FontWeight="Bold" Foreground="#2ECC71"/>
+                        
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Ficheiro encriptado:" FontSize="11" Foreground="#888"/>
+                            <TextBox Text="{Binding SignedFileName}" IsReadOnly="True"
+                                     FontSize="10" FontFamily="monospace"/>
+                        </StackPanel>
+
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Chave de encriptação:" FontSize="11" Foreground="#888"/>
+                            <TextBox Text="{Binding EncryptionKey}" IsReadOnly="True"
+                                     FontSize="10" FontFamily="monospace" Height="50"
+                                     TextWrapping="Wrap"/>
+                        </StackPanel>
+
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Key file:" FontSize="11" Foreground="#888"/>
+                            <TextBox Text="{Binding KeyFilePath}" IsReadOnly="True"
+                                     FontSize="10" FontFamily="monospace"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Log -->
+                <Border Background="#16213e" CornerRadius="6" Padding="12"
+                        IsVisible="{Binding LogText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Log" FontSize="13" FontWeight="Bold"/>
+                        <TextBox Text="{Binding LogText}" IsReadOnly="True"
+                                 FontFamily="monospace" FontSize="11"
+                                 Height="150" AcceptsReturn="True"
+                                 Background="#0d1117" Foreground="#b0b0b0"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Footer -->
+        <StackPanel Grid.Row="2" Margin="0,8,0,0">
+            <TextBlock Text="CC Signer v1.0 — iLayerCert Integration"
+                       FontSize="10" Foreground="#555" HorizontalAlignment="Center"/>
+        </StackPanel>
+    </Grid>
+</Window>
