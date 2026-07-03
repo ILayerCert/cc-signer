@@ -17,16 +17,39 @@ Integra-se com a iLayerCert APP para assinatura digital de documentos.
 
 ## Requisitos
 
+### Linux
 - .NET 10.0 Runtime (ou publicar self-contained)
-- `pteid-mw` (middleware Cartão de Cidadão)
+- `sudo apt install pteid-mw opensc` (middleware CC + pkcs11-tool)
+- Leitor de smart cards + Cartão de Cidadão
+
+### Windows 11
+- .NET 10.0 SDK (para compilar) ou .NET 10.0 Runtime (para executar)
+- [Cartão de Cidadão middleware](https://www.autenticacao.gov.pt/cc-aplicacao)
+- [OpenSC](https://github.com/OpenSC/OpenSC/releases) (fornece pkcs11-tool.exe)
+- [OpenSSL for Windows](https://slproweb.com/products/Win32OpenSSL.html) (Win64 OpenSSL)
 - Leitor de smart cards + Cartão de Cidadão
 
 ## Instalação
 
+### Linux
 ```bash
 cd cc-signer/
 chmod +x install.sh
 ./install.sh
+```
+
+### Windows 11
+```bash
+# Compilar (requer .NET 10.0 SDK)
+publish-win.bat
+
+# A pasta publish\win-x64\ contém o executável CC.Signer.exe
+# Copiar para o computador destino e executar
+```
+
+Ou fazer cross-compile a partir de Linux:
+```bash
+dotnet publish CC.Signer/CC.Signer.csproj -c Release -r win-x64 --self-contained true -o publish/win-x64
 ```
 
 ## Fluxo de utilização
@@ -103,14 +126,27 @@ cc-signer/
 
 ## Troubleshooting
 
+### Linux
 **"Middleware não encontrado"**
 ```bash
-sudo apt install pteid-mw
+sudo apt install pteid-mw opensc
 ```
 
 **"Cartão não detectado"**
 ```bash
 pkcs11-tool --module /usr/lib/x86_64-linux-gnu/libpteidpkcs11.so -O
+```
+
+### Windows 11
+**"Middleware não encontrado"**
+- Instalar [Cartão de Cidadão Software](https://www.autenticacao.gov.pt/cc-aplicacao)
+- Instalar [OpenSC](https://github.com/OpenSC/OpenSC/releases) (versão .msi)
+- Verificar que `C:\Program Files\Portugal Identity Card\pteidpkcs11.dll` existe
+- Verificar que `C:\Program Files\OpenSC Project\OpenSC\tools\pkcs11-tool.exe` existe
+
+**"Cartão não detectado"**
+```cmd
+"C:\Program Files\OpenSC Project\OpenSC\tools\pkcs11-tool.exe" --module "C:\Program Files\Portugal Identity Card\pteidpkcs11.dll" -O
 ```
 
 **Erro ao assinar**

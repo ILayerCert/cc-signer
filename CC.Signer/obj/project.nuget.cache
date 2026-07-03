@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "bCO0VdBKRaU=",
+  "dgSpecHash": "Cuas+Y07+NQ=",
   "success": true,
   "projectFilePath": "/home/pdias/Documents/html/cc-signer/CC.Signer/CC.Signer.csproj",
   "expectedPackageFiles": [
@@ -43,10 +43,7 @@
     "/home/pdias/.nuget/packages/skiasharp.nativeassets.macos/3.119.4/skiasharp.nativeassets.macos.3.119.4.nupkg.sha512",
     "/home/pdias/.nuget/packages/skiasharp.nativeassets.webassembly/3.119.4/skiasharp.nativeassets.webassembly.3.119.4.nupkg.sha512",
     "/home/pdias/.nuget/packages/skiasharp.nativeassets.win32/3.119.4/skiasharp.nativeassets.win32.3.119.4.nupkg.sha512",
-    "/home/pdias/.nuget/packages/tmds.dbus.protocol/0.92.0/tmds.dbus.protocol.0.92.0.nupkg.sha512",
-    "/home/pdias/.nuget/packages/microsoft.netcore.app.runtime.linux-x64/10.0.9/microsoft.netcore.app.runtime.linux-x64.10.0.9.nupkg.sha512",
-    "/home/pdias/.nuget/packages/microsoft.aspnetcore.app.runtime.linux-x64/10.0.9/microsoft.aspnetcore.app.runtime.linux-x64.10.0.9.nupkg.sha512",
-    "/home/pdias/.nuget/packages/microsoft.netcore.app.host.linux-x64/10.0.9/microsoft.netcore.app.host.linux-x64.10.0.9.nupkg.sha512"
+    "/home/pdias/.nuget/packages/tmds.dbus.protocol/0.92.0/tmds.dbus.protocol.0.92.0.nupkg.sha512"
   ],
   "logs": []
 }

@@ -8,9 +8,14 @@ using CC.Signer.Models;
 
 namespace CC.Signer.Services;
 
+/// <summary>
+/// Cross-platform Cartão de Cidadão reader using pkcs11-tool.
+/// Supports Linux (libpteidpkcs11.so), macOS (libpteidpkcs11.dylib), Windows (pteidpkcs11.dll).
+/// </summary>
 public class CCReaderService
 {
-    private const string Pkcs11Tool = "pkcs11-tool";
+    private readonly string _pkcs11Tool;
+    private readonly string _openssl;
     private string? _modulePath;
 
     private static readonly string[] ModulePathsLinux =
@@ -25,18 +30,67 @@ public class CCReaderService
         "/usr/local/lib/libpteidpkcs11.dylib"
     ];
 
+    private static readonly string[] ModulePathsWindows =
+    [
+        @"C:\Program Files\Portugal Identity Card\pteidpkcs11.dll",
+        @"C:\Program Files (x86)\Portugal Identity Card\pteidpkcs11.dll",
+        @"C:\Windows\System32\pteidpkcs11.dll",
+        // OpenSC bundled pkcs11 module
+        @"C:\Program Files\OpenSC Project\OpenSC\pkcs11\opensc-pkcs11.dll"
+    ];
+
+    private static readonly string[] WindowsPkcs11ToolPaths =
+    [
+        @"C:\Program Files\OpenSC Project\OpenSC\tools\pkcs11-tool.exe",
+        @"C:\Program Files (x86)\OpenSC Project\OpenSC\tools\pkcs11-tool.exe",
+        "pkcs11-tool.exe"
+    ];
+
+    private static readonly string[] WindowsOpenSslPaths =
+    [
+        @"C:\Program Files\OpenSSL\bin\openssl.exe",
+        @"C:\Program Files (x86)\OpenSSL\bin\openssl.exe",
+        "openssl.exe"
+    ];
+
     public CCReaderService()
     {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            _pkcs11Tool = FindWindowsExe(WindowsPkcs11ToolPaths, "pkcs11-tool.exe");
+            _openssl = FindWindowsExe(WindowsOpenSslPaths, "openssl.exe");
+        }
+        else
+        {
+            _pkcs11Tool = "pkcs11-tool"; // on PATH for Linux/macOS
+            _openssl = "openssl";         // on PATH for Linux/macOS
+        }
+
         _modulePath = FindModule();
     }
 
     public bool IsAvailable => _modulePath != null;
 
+    /// <summary>
+    /// Human-readable install instructions based on current OS.
+    /// </summary>
+    public string GetInstallInstructions()
+    {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            return "Instale o Cartão de Cidadão a partir de https://www.autenticacao.gov.pt/cc-aplicacao\n" +
+                   "e instale também OpenSC (https://github.com/OpenSC/OpenSC/releases) para o pkcs11-tool.";
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            return "Instale o middleware do CC via App Store ou https://www.autenticacao.gov.pt";
+        return "Instale: sudo apt install pteid-mw opensc";
+    }
+
     private static string? FindModule()
     {
-        string[] paths = RuntimeInformation.IsOSPlatform(OSPlatform.OSX)
-            ? ModulePathsMac
-            : ModulePathsLinux;
+        string[] paths = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? ModulePathsWindows
+            : RuntimeInformation.IsOSPlatform(OSPlatform.OSX)
+                ? ModulePathsMac
+                : ModulePathsLinux;
 
         foreach (var p in paths)
         {
@@ -45,11 +99,21 @@ public class CCReaderService
         return null;
     }
 
+    private static string FindWindowsExe(string[] paths, string fallback)
+    {
+        foreach (var p in paths)
+        {
+            if (File.Exists(p)) return p;
+        }
+        // Return fallback name — Process.Start will search PATH
+        return fallback;
+    }
+
     private (string stdout, string stderr, int exitCode) Run(string[] args, int timeoutMs = 15000)
     {
         var psi = new ProcessStartInfo
         {
-            FileName = Pkcs11Tool,
+            FileName = _pkcs11Tool,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
@@ -75,11 +139,17 @@ public class CCReaderService
     public CCStatus GetStatus()
     {
         if (!IsAvailable)
-            return new CCStatus { Available = false, Error = "Middleware do Cartão de Cidadão não encontrado. Instale: sudo apt install pteid-mw" };
+            return new CCStatus { Available = false, Error = GetInstallInstructions() };
 
         var (stdout, stderr, rc) = Run(["-O"], 10000);
         if (rc != 0)
-            return new CCStatus { Available = false, Error = stderr.Trim().Length > 0 ? stderr.Trim() : "Cartão de Cidadão não detectado" };
+            return new CCStatus
+            {
+                Available = false,
+                Error = stderr.Trim().Length > 0
+                    ? stderr.Trim()
+                    : "Cartão de Cidadão não detectado. Verifique se o cartão está inserido no leitor."
+            };
 
         var certs = new List<CCCertificate>();
         foreach (var line in stdout.Split('\n'))
@@ -101,7 +171,7 @@ public class CCReaderService
     public CCTokenResult GetCertificate(string? certId = null, string label = "CITIZEN AUTHENTICATION CERTIFICATE")
     {
         if (!IsAvailable)
-            return new CCTokenResult { Error = "Middleware não encontrado" };
+            return new CCTokenResult { Error = GetInstallInstructions() };
 
         if (string.IsNullOrEmpty(certId))
         {
@@ -131,7 +201,7 @@ public class CCReaderService
         // Convert DER to PEM via openssl
         var psi = new ProcessStartInfo
         {
-            FileName = "openssl",
+            FileName = _openssl,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
@@ -145,21 +215,21 @@ public class CCReaderService
         psi.ArgumentList.Add("-outform");
         psi.ArgumentList.Add("PEM");
 
-        using var openssl = Process.Start(psi)!;
-        var pem = openssl.StandardOutput.ReadToEnd();
-        openssl.WaitForExit(5000);
+        using var opensslProc = Process.Start(psi)!;
+        var pem = opensslProc.StandardOutput.ReadToEnd();
+        opensslProc.WaitForExit(5000);
 
         try { File.Delete(tmpDer); } catch { }
 
         return pem.Length > 0
             ? new CCTokenResult { Success = true, CertId = certId, Pem = pem, Label = label }
-            : new CCTokenResult { Error = "Falha ao converter certificado para PEM" };
+            : new CCTokenResult { Error = "Falha ao converter certificado para PEM. Verifique se o OpenSSL está instalado." };
     }
 
     public CCSignResult Sign(string data, string mechanism = "SHA256-RSA-PKCS")
     {
         if (!IsAvailable)
-            return new CCSignResult { Error = "Middleware não encontrado" };
+            return new CCSignResult { Error = GetInstallInstructions() };
 
         var infile = Path.GetTempFileName();
         var outfile = Path.GetTempFileName();
