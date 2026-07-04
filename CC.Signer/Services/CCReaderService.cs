@@ -109,7 +109,7 @@ public class CCReaderService
         return fallback;
     }
 
-    private (string stdout, string stderr, int exitCode) Run(string[] args, int timeoutMs = 15000)
+    private (string stdout, string stderr, int exitCode) Run(string[] args, string? pin = null, int timeoutMs = 15000)
     {
         var psi = new ProcessStartInfo
         {
@@ -121,6 +121,11 @@ public class CCReaderService
         };
 
         var allArgs = new List<string> { "--module", _modulePath! };
+        if (!string.IsNullOrEmpty(pin))
+        {
+            allArgs.Add("--pin");
+            allArgs.Add(pin);
+        }
         allArgs.AddRange(args);
         foreach (var a in allArgs) psi.ArgumentList.Add(a);
 
@@ -136,12 +141,12 @@ public class CCReaderService
         return (stdout, stderr, proc.ExitCode);
     }
 
-    public CCStatus GetStatus()
+    public CCStatus GetStatus(string? pin = null)
     {
         if (!IsAvailable)
             return new CCStatus { Available = false, Error = GetInstallInstructions() };
 
-        var (stdout, stderr, rc) = Run(["-O"], 10000);
+        var (stdout, stderr, rc) = Run(["-O"], pin, 10000);
         if (rc != 0)
             return new CCStatus
             {
@@ -168,14 +173,14 @@ public class CCReaderService
         return new CCStatus { Available = true, Certificates = certs };
     }
 
-    public CCTokenResult GetCertificate(string? certId = null, string label = "CITIZEN AUTHENTICATION CERTIFICATE")
+    public CCTokenResult GetCertificate(string? certId = null, string? pin = null, string label = "CITIZEN AUTHENTICATION CERTIFICATE")
     {
         if (!IsAvailable)
             return new CCTokenResult { Error = GetInstallInstructions() };
 
         if (string.IsNullOrEmpty(certId))
         {
-            var (stdout, _, _) = Run(["-O"]);
+            var (stdout, _, _) = Run(["-O"], pin);
             foreach (var line in stdout.Split('\n'))
             {
                 if (line.Contains(label))
@@ -190,7 +195,7 @@ public class CCReaderService
             return new CCTokenResult { Error = $"Certificado '{label}' não encontrado" };
 
         var tmpDer = Path.GetTempFileName();
-        var (_, stderr, rc) = Run(["-r", "-y", "cert", "--id", certId, "-o", tmpDer]);
+        var (_, stderr, rc) = Run(["-r", "-y", "cert", "--id", certId, "-o", tmpDer], pin);
 
         if (rc != 0)
         {
@@ -235,14 +240,7 @@ public class CCReaderService
         var outfile = Path.GetTempFileName();
         File.WriteAllText(infile, data);
 
-        var signArgs = new List<string> { "--sign", "-m", mechanism, "--input", infile, "-o", outfile };
-        if (!string.IsNullOrEmpty(pin))
-        {
-            signArgs.Add("--pin");
-            signArgs.Add(pin);
-        }
-
-        var (_, stderr, rc) = Run(signArgs.ToArray(), 30000);
+        var (_, stderr, rc) = Run(["--sign", "-m", mechanism, "--input", infile, "-o", outfile], pin, 30000);
 
         string signature = "";
         if (rc == 0)

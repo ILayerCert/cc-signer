@@ -30,6 +30,9 @@ public partial class MainWindowViewModel : ViewModelBase
     private string _signaturePin = string.Empty;
 
     [ObservableProperty]
+    private string _authenticationPin = string.Empty;
+
+    [ObservableProperty]
     private string _outputDirectory = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
         ".ilayercert", "signatures");
@@ -66,7 +69,7 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void RefreshStatus()
     {
-        var status = _ccReader.GetStatus();
+        var status = _ccReader.GetStatus(AuthenticationPin);
         IsCCAvailable = status.Available;
         Certificates.Clear();
 
@@ -166,7 +169,7 @@ public partial class MainWindowViewModel : ViewModelBase
         BusyText = "A extrair certificado...";
         AppendLog("> A extrair certificado de autenticação...");
 
-        var cert = _ccReader.GetCertificate(label: "CITIZEN AUTHENTICATION CERTIFICATE");
+        var cert = _ccReader.GetCertificate(pin: AuthenticationPin, label: "CITIZEN AUTHENTICATION CERTIFICATE");
 
         if (!cert.Success)
         {

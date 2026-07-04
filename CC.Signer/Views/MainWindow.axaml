@@ -76,6 +76,16 @@
                                     ToolTip.Tip="Atualizar estado"/>
                         </StackPanel>
 
+                        <!-- Authentication PIN -->
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="PIN de Autenticação" FontSize="12" FontWeight="Bold"/>
+                            <TextBlock Text="PIN para aceder aos dados do cartão (diferente do PIN de assinatura)"
+                                       FontSize="10" Foreground="#888"/>
+                            <TextBox Text="{Binding AuthenticationPin}" 
+                                     PasswordChar="●"
+                                     PlaceholderText="PIN de autenticação do Cartão de Cidadão..."/>
+                        </StackPanel>
+
                         <ListBox ItemsSource="{Binding Certificates}"
                                  MaxHeight="100"
                                  IsVisible="{Binding IsCCAvailable}">
