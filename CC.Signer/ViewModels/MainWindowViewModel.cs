@@ -125,9 +125,7 @@ public partial class MainWindowViewModel : ViewModelBase
             signature = signResult.Signature,
             mechanism = signResult.Mechanism,
             timestamp = DateTimeOffset.UtcNow.ToString("o"),
-            data_hash = Convert.ToBase64String(
-                System.Security.Cryptography.SHA256.HashData(
-                    System.Text.Encoding.UTF8.GetBytes(DataToSign)))
+            data_hash = DataToSign  // raw hex hash from iLayerCert (already SHA-256)
         });
 
         var saveResult = _encryption.EncryptAndSave(payload, OutputDirectory);
