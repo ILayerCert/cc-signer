@@ -117,6 +117,21 @@ public partial class MainWindowViewModel : ViewModelBase
 
         AppendLog("✓ Assinatura gerada com sucesso.");
 
+        // Extract certificate from CC (needed by iLayerCert for verification)
+        BusyText = "A extrair certificado...";
+        AppendLog("> A extrair certificado de autenticação...");
+        var cert = _ccReader.GetCertificate(pin: AuthenticationPin, label: "CITIZEN AUTHENTICATION CERTIFICATE");
+        string certPem = "";
+        if (cert.Success)
+        {
+            certPem = cert.Pem;
+            AppendLog($"✓ Certificado extraído: {cert.Label}");
+        }
+        else
+        {
+            AppendLog($"⚠ Aviso: Não foi possível extrair certificado: {cert.Error}");
+        }
+
         BusyText = "A encriptar assinatura...";
         AppendLog("> A encriptar assinatura com AES-256-GCM...");
 
@@ -125,7 +140,8 @@ public partial class MainWindowViewModel : ViewModelBase
             signature = signResult.Signature,
             mechanism = signResult.Mechanism,
             timestamp = DateTimeOffset.UtcNow.ToString("o"),
-            data_hash = DataToSign  // raw hex hash from iLayerCert (already SHA-256)
+            data_hash = DataToSign,  // raw hex hash from iLayerCert (already SHA-256)
+            certificate_pem = certPem
         });
 
         var saveResult = _encryption.EncryptAndSave(payload, OutputDirectory);
