@@ -56,10 +56,10 @@
             <StackPanel Orientation="Horizontal" Spacing="12">
                 <TextBlock Text="CC Signer" FontSize="22" FontWeight="Bold" Foreground="#2ECC71"/>
                 <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                    <TextBlock Text="💳" FontSize="16" 
-                               IsVisible="{Binding IsCCAvailable}"/>
-                    <TextBlock Text="❌" FontSize="14" 
-                               IsVisible="{Binding IsCCAvailable, Converter={x:Static BoolConverters.Not}}"/>
+                    <!-- Status dot: green when connected, red when not -->
+                    <Border Width="10" Height="10" CornerRadius="5"
+                            Background="{Binding StatusColor}"
+                            VerticalAlignment="Center"/>
                     <Border Background="{Binding StatusColor}" CornerRadius="3" Padding="8,2">
                         <TextBlock Text="{Binding StatusText}" FontSize="12" Foreground="#1a1a2e"/>
                     </Border>
