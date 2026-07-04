@@ -27,6 +27,9 @@ public partial class MainWindowViewModel : ViewModelBase
     private string _dataToSign = string.Empty;
 
     [ObservableProperty]
+    private string _signaturePin = string.Empty;
+
+    [ObservableProperty]
     private string _outputDirectory = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
         ".ilayercert", "signatures");
@@ -100,7 +103,7 @@ public partial class MainWindowViewModel : ViewModelBase
         BusyText = "A assinar com Cartão de Cidadão...";
         AppendLog($"> A assinar dados ({DataToSign.Length} bytes)...");
 
-        var signResult = _ccReader.Sign(DataToSign);
+        var signResult = _ccReader.Sign(DataToSign, SignaturePin);
 
         if (!signResult.Success)
         {

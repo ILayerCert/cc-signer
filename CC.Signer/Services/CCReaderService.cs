@@ -226,7 +226,7 @@ public class CCReaderService
             : new CCTokenResult { Error = "Falha ao converter certificado para PEM. Verifique se o OpenSSL está instalado." };
     }
 
-    public CCSignResult Sign(string data, string mechanism = "SHA256-RSA-PKCS")
+    public CCSignResult Sign(string data, string? pin = null, string mechanism = "SHA256-RSA-PKCS")
     {
         if (!IsAvailable)
             return new CCSignResult { Error = GetInstallInstructions() };
@@ -235,7 +235,14 @@ public class CCReaderService
         var outfile = Path.GetTempFileName();
         File.WriteAllText(infile, data);
 
-        var (_, stderr, rc) = Run(["--sign", "-m", mechanism, "--input", infile, "-o", outfile], 30000);
+        var signArgs = new List<string> { "--sign", "-m", mechanism, "--input", infile, "-o", outfile };
+        if (!string.IsNullOrEmpty(pin))
+        {
+            signArgs.Add("--pin");
+            signArgs.Add(pin);
+        }
+
+        var (_, stderr, rc) = Run(signArgs.ToArray(), 30000);
 
         string signature = "";
         if (rc == 0)

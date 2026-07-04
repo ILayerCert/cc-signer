@@ -112,6 +112,18 @@
                     </StackPanel>
                 </Border>
 
+                <!-- Signature PIN -->
+                <Border Background="#16213e" CornerRadius="6" Padding="12">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="PIN de Assinatura" FontSize="14" FontWeight="Bold"/>
+                        <TextBlock Text="PIN necessário para operações de assinatura digital (diferente do PIN de autenticação/morada)"
+                                   FontSize="11" Foreground="#888"/>
+                        <TextBox Text="{Binding SignaturePin}" 
+                                 PasswordChar="●"
+                                 PlaceholderText="PIN de assinatura do Cartão de Cidadão..."/>
+                    </StackPanel>
+                </Border>
+
                 <!-- Output directory -->
                 <Border Background="#16213e" CornerRadius="6" Padding="12">
                     <StackPanel Spacing="8">
