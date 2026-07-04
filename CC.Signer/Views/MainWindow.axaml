@@ -55,9 +55,15 @@
         <StackPanel Grid.Row="0" Spacing="8" Margin="0,0,0,12">
             <StackPanel Orientation="Horizontal" Spacing="12">
                 <TextBlock Text="CC Signer" FontSize="22" FontWeight="Bold" Foreground="#2ECC71"/>
-                <Border Background="{Binding StatusColor}" CornerRadius="3" Padding="8,2" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding StatusText}" FontSize="12" Foreground="#1a1a2e"/>
-                </Border>
+                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                    <TextBlock Text="💳" FontSize="16" 
+                               IsVisible="{Binding IsCCAvailable}"/>
+                    <TextBlock Text="❌" FontSize="14" 
+                               IsVisible="{Binding IsCCAvailable, Converter={x:Static BoolConverters.Not}}"/>
+                    <Border Background="{Binding StatusColor}" CornerRadius="3" Padding="8,2">
+                        <TextBlock Text="{Binding StatusText}" FontSize="12" Foreground="#1a1a2e"/>
+                    </Border>
+                </StackPanel>
             </StackPanel>
             <TextBlock Text="Assinatura digital com Cartão de Cidadão + Encriptação AES-256-GCM"
                        FontSize="12" Foreground="#888"/>

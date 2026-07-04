@@ -75,7 +75,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
         if (status.Available)
         {
-            StatusText = "Cartão de Cidadão detectado ✓";
+            StatusText = "Cartão de Cidadão detectado";
             StatusColor = "#2ECC71";
             foreach (var c in status.Certificates)
                 Certificates.Add(c);
