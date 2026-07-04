@@ -85,7 +85,7 @@
                         <!-- Authentication PIN -->
                         <StackPanel Spacing="4">
                             <TextBlock Text="PIN de Autenticação" FontSize="12" FontWeight="Bold"/>
-                            <TextBlock Text="PIN para aceder aos dados do cartão (diferente do PIN de assinatura)"
+                            <TextBlock Text="PIN para extrair certificado do cartão (não necessário para refrescar estado)"
                                        FontSize="10" Foreground="#888"/>
                             <TextBox Text="{Binding AuthenticationPin}" 
                                      PasswordChar="●"

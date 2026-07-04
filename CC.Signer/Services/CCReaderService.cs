@@ -141,12 +141,12 @@ public class CCReaderService
         return (stdout, stderr, proc.ExitCode);
     }
 
-    public CCStatus GetStatus(string? pin = null)
+    public CCStatus GetStatus()
     {
         if (!IsAvailable)
             return new CCStatus { Available = false, Error = GetInstallInstructions() };
 
-        var (stdout, stderr, rc) = Run(["-O"], pin, 10000);
+        var (stdout, stderr, rc) = Run(["-O"], timeoutMs: 10000);
         if (rc != 0)
             return new CCStatus
             {

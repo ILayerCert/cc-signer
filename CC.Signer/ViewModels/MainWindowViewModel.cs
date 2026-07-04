@@ -69,7 +69,7 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void RefreshStatus()
     {
-        var status = _ccReader.GetStatus(AuthenticationPin);
+        var status = _ccReader.GetStatus();
         IsCCAvailable = status.Available;
         Certificates.Clear();
 
