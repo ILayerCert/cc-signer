@@ -20,6 +20,7 @@ public class CCReaderService
 
     private static readonly string[] ModulePathsLinux =
     [
+        "/usr/lib/x86_64-linux-gnu/opensc-pkcs11.so",
         "/usr/lib/x86_64-linux-gnu/libpteidpkcs11.so",
         "/usr/local/lib/libpteidpkcs11.so",
         "/usr/lib/libpteidpkcs11.so"
@@ -109,7 +110,7 @@ public class CCReaderService
         return fallback;
     }
 
-    private (string stdout, string stderr, int exitCode) Run(string[] args, string? pin = null, int timeoutMs = 15000)
+    private (string stdout, string stderr, int exitCode) Run(string[] args, string? pin = null, int? slot = null, int timeoutMs = 15000)
     {
         var psi = new ProcessStartInfo
         {
@@ -121,6 +122,11 @@ public class CCReaderService
         };
 
         var allArgs = new List<string> { "--module", _modulePath! };
+        if (slot.HasValue)
+        {
+            allArgs.Add("--slot");
+            allArgs.Add(slot.Value.ToString());
+        }
         if (!string.IsNullOrEmpty(pin))
         {
             allArgs.Add("--pin");
@@ -146,7 +152,7 @@ public class CCReaderService
         if (!IsAvailable)
             return new CCStatus { Available = false, Error = GetInstallInstructions() };
 
-        var (stdout, stderr, rc) = Run(["-O"], timeoutMs: 10000);
+        var (stdout, stderr, rc) = Run(["-O"], slot: 0, timeoutMs: 10000);
         if (rc != 0)
             return new CCStatus
             {
@@ -180,7 +186,7 @@ public class CCReaderService
 
         if (string.IsNullOrEmpty(certId))
         {
-            var (stdout, _, _) = Run(["-O"], pin);
+            var (stdout, _, _) = Run(["-O"], pin, 0);
             foreach (var line in stdout.Split('\n'))
             {
                 if (line.Contains(label))
@@ -195,7 +201,7 @@ public class CCReaderService
             return new CCTokenResult { Error = $"Certificado '{label}' não encontrado" };
 
         var tmpDer = Path.GetTempFileName();
-        var (_, stderr, rc) = Run(["-r", "-y", "cert", "--id", certId, "-o", tmpDer], pin);
+        var (_, stderr, rc) = Run(["-r", "-y", "cert", "--id", certId, "-o", tmpDer], pin, 0);
 
         if (rc != 0)
         {
@@ -240,7 +246,7 @@ public class CCReaderService
         var outfile = Path.GetTempFileName();
         File.WriteAllText(infile, data);
 
-        var (_, stderr, rc) = Run(["--sign", "-m", mechanism, "--input", infile, "-o", outfile], pin, 30000);
+        var (_, stderr, rc) = Run(["--sign", "-m", mechanism, "--input", infile, "-o", outfile], pin, 1, 30000);
 
         string signature = "";
         if (rc == 0)
