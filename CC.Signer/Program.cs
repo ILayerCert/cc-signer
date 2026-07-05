@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Linq;
 using Avalonia;
+using CC.Signer.Api;
 using CC.Signer.Services;
 using CC.Signer.ViewModels;
 using CC.Signer.Views;
@@ -14,6 +16,19 @@ sealed class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        // API mode: cc-signer --api [--port 8085]
+        if (args.Contains("--api"))
+        {
+            int port = 8085;
+            var portIdx = Array.IndexOf(args, "--port");
+            if (portIdx >= 0 && portIdx + 1 < args.Length && int.TryParse(args[portIdx + 1], out var p))
+                port = p;
+
+            CcSignerApi.Run(args, port).GetAwaiter().GetResult();
+            return;
+        }
+
+        // GUI mode (default)
         var services = new ServiceCollection();
         ConfigureServices(services);
         Services = services.BuildServiceProvider();
